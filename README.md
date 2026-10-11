@@ -1,104 +1,192 @@
 # 🔒 Foco Bloqueio
 
-**Uma página de bloqueio motivacional, leve e personalizável por URL.**
+**A lightweight, customizable focus reminder page and a schedule-based website blocker for Via Browser.**
 
-O **Foco Bloqueio** é uma página HTML estática que lembra você dos seus objetivos quando tenta acessar um site fora do horário que definiu.
+Foco Bloqueio helps you interrupt distracting browsing habits. When a website matches a blocking rule outside its allowed hours, the optional `addon.js` userscript redirects the browser to a motivational page that reminds you of your goals and when the website will be available again.
 
-Em vez de modificar o conteúdo do site bloqueado, um userscript ou extensão pode **redirecionar o navegador para uma página motivacional personalizada**.
+The project separates **blocking rules** (`addon.js`) from **presentation** (`index.html`). The same hosted page can be reused by different people, each with their own schedule, websites, goals, and messages.
 
-O projeto foi criado para ajudar a reduzir distrações e recuperar o foco, sem exigir contas, bancos de dados ou serviços pagos.
+## ✨ Features
 
-## ✨ Funcionalidades
+- **Two schedule-based blocklists:** one with a midday break and an evening unlock, and another with an evening-only unlock.
+- **Wildcard domain matching:** supports patterns such as `*.youtube.com`, `youtube.*`, and `*example*`.
+- **Motivational redirect:** sends blocked visits to an independent HTTPS page instead of modifying the target website's DOM.
+- **Customizable messages:** blocked site, heading, description, goal, next action, unlock time, and footer.
+- **Light and dark themes**, responsive layout, and no external JavaScript libraries.
+- **Privacy-conscious URL parameters:** the userscript places personalized values in the URL fragment (`#`).
+- **No account, database, or backend** required for the static page.
 
-- **Mensagens personalizadas:** título, descrição, objetivo, próxima ação e rodapé.
-- **Horário de liberação:** exibe o horário enviado pelo bloqueador.
-- **Identificação do site:** mostra qual site foi pausado.
-- **Temas claro e escuro.**
-- **Layout responsivo:** compatível com celulares e computadores.
-- **Privacidade:** aceita parâmetros no fragmento `#` da URL.
-- **Sem dependências:** HTML, CSS e JavaScript puro.
+## 📁 Repository structure
 
-## 🚀 Instalação
+- `index.html` — Standalone motivational page.
+- `addon.js` — Via Browser userscript: domain matching, schedules, and redirects.
+- `README.md` — Project documentation.
 
-A página pode ser hospedada gratuitamente em qualquer serviço de hospedagem estática.
+## 🚀 Getting started
 
-### Publicando no GitHub Pages
+### 1. Host the motivational page
 
-1. Crie um repositório público chamado `foco-bloqueio`.
-2. Adicione o arquivo `index.html` à raiz do repositório.
-3. Acesse **Settings → Pages**.
-4. Selecione **Deploy from a branch**.
-5. Escolha a branch `main` e a pasta `/(root)`.
-6. Salve e aguarde a publicação.
+You can deploy `index.html` to any HTTPS static hosting service.
 
-A página estará disponível em um endereço semelhante a:
+For GitHub Pages:
 
-`https://SEU_USUARIO.github.io/foco-bloqueio/`
+1. Fork or clone this repository, or upload its contents to your own repository.
+2. Open **Settings → Pages** in your GitHub repository.
+3. Under **Build and deployment**, select **Deploy from a branch**.
+4. Choose the `main` branch and `/(root)`, then save.
+5. Wait for GitHub Pages to publish the site.
 
-## ⚙️ Parâmetros disponíveis
+Your URL will typically look like:
 
-A página recebe parâmetros pela URL, permitindo sua utilização por diferentes usuários sem modificar o código-fonte.
+`https://YOUR_USERNAME.github.io/foco-bloqueio/`
 
-| Parâmetro | Descrição |
+You can also use `index.html` on its own as a customizable reminder page, without installing the blocker.
+
+### 2. Install and configure `addon.js` in Via Browser
+
+`addon.js` is a **userscript**, not a standalone Android app or Chrome extension.
+
+1. Open [addon.js](./addon.js) and copy its complete contents.
+2. In **Via Browser**, open the browser's scripts/userscripts settings (the menu name may vary by version), create a new script, and paste the code.
+3. Save and enable the script. If the browser asks which websites the script may run on, allow the intended websites.
+4. Edit the `CONFIG` object at the beginning of the script. Most importantly, replace the example `pagina` URL with your actual HTTPS page.
+5. Add your own domain patterns, schedules, and motivational messages.
+6. Visit a matching website outside its allowed hours to test the redirect.
+
+**Important:** The repository currently uses `https://YOUR_USER.github.io/foco-bloqueio/` as an example in `addon.js`. Replace `YOUR_USER` with a real GitHub username before using it. The existing placeholder check looks for a different string (`SEU_USUARIO`), so it does not catch the shipped `YOUR_USER` placeholder.
+
+## ⚙️ addon.js configuration
+
+The script's `CONFIG` object contains the settings users normally need to change:
+
+| Setting | Purpose | Current example |
+|---|---|---|
+| `pagina` | HTTPS URL of the motivational page | `https://YOUR_USER.github.io/foco-bloqueio/` |
+| `almoco.inicio` | Start of the midday allowance | `12:00` |
+| `almoco.fim` | End of the midday allowance (exclusive) | `13:00` |
+| `noite` | Time when both lists become available | `17:30` |
+| `sitesAlmoco` | Domains allowed at midday and after the evening unlock | YouTube, Instagram, TikTok examples |
+| `sitesNoite` | Domains allowed only after the evening unlock | `*anything*` placeholder |
+| `tema` | Motivational page theme | `escuro` or `claro` |
+| `textos` | Personalized heading, message, goal, action, and footer | Portuguese sample messages |
+
+**Example configuration excerpt:**
+
+```javascript
+const CONFIG = {
+  pagina: 'https://YOUR_USERNAME.github.io/foco-bloqueio/',
+  almoco: { inicio: '12:00', fim: '13:00' },
+  noite: '17:30',
+  sitesAlmoco: ['*.youtube.com', 'youtu.be', '*.instagram.com'],
+  sitesNoite: ['*example*'],
+  tema: 'escuro',
+  textos: {
+    titulo: 'Stay focused on what matters.',
+    mensagem: 'You can come back to this later.',
+    objetivo: 'Finish my personal project.',
+    acao: 'Work on one small task for 25 minutes.',
+    rodape: 'Small steps, lasting results.'
+  }
+};
+```
+
+This is an example excerpt: edit the configuration in the existing file rather than replacing the entire script with this snippet.
+
+### How the two blocklists work
+
+With the default schedule, the rules are:
+
+| Local time | `sitesAlmoco` | `sitesNoite` |
+|---|---|---|
+| 00:00–11:59 | Blocked | Blocked |
+| 12:00–12:59 | Allowed | Blocked |
+| 13:00–17:29 | Blocked | Blocked |
+| 17:30–23:59 | Allowed | Allowed |
+
+- Times use the device's **local clock** and 24-hour `HH:MM` format.
+- The end of the midday window is exclusive: at exactly `13:00`, midday sites are blocked again on the next script execution.
+- **`sitesNoite` takes precedence** if a domain matches both lists.
+- Unlisted websites are unaffected.
+
+### Wildcard rules
+
+Patterns are matched against the **hostname**, not the entire URL:
+
+| Pattern | Example matches |
 |---|---|
-| `site` | Nome do site bloqueado |
-| `titulo` | Título principal da página |
-| `mensagem` | Mensagem explicativa |
-| `objetivo` | Objetivo pessoal do usuário |
-| `acao` | Próxima ação recomendada |
-| `liberacao` | Próximo horário permitido |
-| `rodape` | Frase motivacional de encerramento |
-| `tema` | `escuro` ou `claro` |
+| `youtube.com` | `youtube.com` only |
+| `*.youtube.com` | `youtube.com`, `www.youtube.com`, `m.youtube.com` |
+| `*example*` | Any hostname containing `example` |
+| `youtube.*` | `youtube.com`, `youtube.org`, etc. |
 
-Todos os parâmetros são opcionais. Quando não são informados, a página utiliza textos padrão.
+The asterisk (`*`) matches zero or more characters. Paths such as `/watch?v=...` are **not** evaluated by the matcher.
 
-### Exemplo de URL
+### What happens on a blocked visit?
 
-`https://SEU_USUARIO.github.io/foco-bloqueio/#site=youtube.com&titulo=Hora+de+focar&objetivo=Concluir+meu+projeto&liberacao=Hoje+as+17%3A30&tema=escuro`
+1. The userscript runs when a matching page starts loading (`document-start`).
+2. It checks the top-level page's hostname and the device's current local time.
+3. It determines which blocklist applies and calculates the next unlock time.
+4. It builds URL parameters using `URLSearchParams`.
+5. It navigates to the configured HTTPS page with `location.replace()`, passing the parameters after `#`.
+6. The hosted `index.html` displays the personalized message.
 
-Os parâmetros também podem ser enviados por query string (`?`), mas recomendamos utilizar o fragmento `#` para maior privacidade. Quando ambos estão presentes, o fragmento tem prioridade.
+The script avoids the need to overwrite the DOM of single-page applications such as YouTube.
 
-## 🔗 Integração com bloqueadores
+## 🎨 Motivational page parameters (index.html)
 
-O Foco Bloqueio **não bloqueia sites sozinho**.
+All parameters are optional. If a value is omitted, the page displays its default content.
 
-Ele funciona como uma página de destino para bloqueadores, extensões ou userscripts responsáveis por verificar domínios e horários.
+| Parameter | Meaning |
+|---|---|
+| `site` | Blocked hostname or label |
+| `titulo` | Main heading |
+| `mensagem` | Supporting message |
+| `objetivo` | Personal goal |
+| `acao` | Suggested next action |
+| `liberacao` | Next permitted access time, displayed as text |
+| `rodape` | Footer message |
+| `tema` | `escuro` or `claro` |
 
-Por exemplo, um userscript instalado no **Via Browser** pode verificar o horário atual e redirecionar o usuário para a página motivacional quando o acesso não estiver permitido.
+Example URL (replace the username with your own):
 
-O redirecionamento pode ser realizado com `location.replace()`, passando as informações personalizadas no fragmento da URL.
+`https://YOUR_USERNAME.github.io/foco-bloqueio/#site=youtube.com&titulo=Time+to+focus&objetivo=Finish+my+project&liberacao=Today+at+17%3A30&tema=escuro`
 
-Essa arquitetura permite que cada usuário configure suas próprias listas de sites, horários e objetivos, utilizando a mesma página hospedada.
+The page accepts parameters in either the URL **fragment (`#`)** or **query string (`?`)**. If a nonempty fragment exists, it takes precedence over the query string.
 
-## 🔐 Privacidade
+The page inserts the values as text with `textContent` and limits text fields to 600 characters.
 
-O projeto foi desenvolvido com atenção à privacidade dos usuários.
+**Note:** The page displays `liberacao` but does not calculate or enforce schedules. That is the responsibility of `addon.js` or another blocker.
 
-- Os parâmetros enviados após `#` não são transmitidos ao servidor na requisição HTTP.
-- As mensagens são processadas localmente pelo JavaScript.
-- Os parâmetros são inseridos na página utilizando `textContent`, sem serem interpretados como HTML.
-- O projeto não inclui cookies, analytics ou bibliotecas externas.
+## 🔐 Privacy and security
 
-**Importante:** o fragmento da URL não é criptografado. Ele ainda pode aparecer no histórico do navegador, em favoritos e em links compartilhados, além de ser acessível aos scripts executados na página.
+- Parameters placed after `#` are **not included in the HTTP request** for the hosted HTML page.
+- The page's JavaScript reads those parameters locally; the current implementation does not include analytics or third-party JavaScript dependencies.
+- User-provided text is inserted using `textContent`, rather than interpreted as HTML markup.
+- Fragments are **not secret or encrypted**: they can remain in browser history, bookmarks, screenshots, and shared links, and page scripts can read them.
+- The hosting provider still receives ordinary requests for `index.html`, including standard connection metadata such as an IP address.
 
-A hospedagem continua recebendo a requisição normal para carregar o arquivo HTML.
+## ⚠️ Limitations
 
-## 🛠️ Tecnologias
+- **Not a network-level blocker.** Users can disable the userscript, use another browser, or otherwise bypass its rules.
+- **No continuous schedule monitoring.** `addon.js` checks the time when the userscript executes. Already-open tabs do not automatically become blocked or unblocked as the clock changes.
+- **SPA navigation may not trigger a new check.** Changes to the URL made within an already loaded single-page application may not run the userscript again.
+- **No automatic return navigation.** The motivational page does not automatically reopen a blocked website when access becomes permitted.
+- **Browser-dependent behavior.** Userscript injection and redirect permissions depend on the Via Browser version and settings.
+- The current code uses the device's local time and expects ordinary daytime schedules; cross-midnight allow windows are not implemented.
 
-- HTML5
-- CSS3
-- JavaScript puro
-- GitHub Pages (hospedagem opcional)
+## 🛠️ Tech stack
 
-## 📌 Limitações
+- HTML5 and CSS3 for the static page.
+- Vanilla JavaScript for URL parameter rendering and matching/scheduling logic.
+- GitHub Pages or any equivalent HTTPS static hosting service.
+- Via Browser userscript support for optional blocking.
 
-- A página não verifica os horários: apenas exibe as informações recebidas.
-- O bloqueio e o redirecionamento dependem de uma ferramenta externa.
-- O funcionamento de userscripts pode variar conforme o navegador.
-- O projeto auxilia no desenvolvimento de hábitos, mas não representa um bloqueio inviolável.
+## 🤝 Contributing
+
+Issues and pull requests are welcome. Useful improvements include additional translations, accessibility enhancements, browser compatibility testing, and optional schedule configurations.
 
 ---
 
-**Foco no que constrói.**
+**Make time for what matters.**
 
-*Disciplina hoje. Liberdade amanhã.*
+*Discipline today. Freedom tomorrow.*
