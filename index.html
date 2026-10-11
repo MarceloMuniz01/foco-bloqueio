@@ -1,104 +1,57 @@
-
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1"
-  >
-
-  <meta
-    name="color-scheme"
-    content="dark light"
-  >
-
-  <title>Foco Bloqueio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <title>Foco Bloqueio — Access paused</title>
 
   <style>
-    /* =====================================
-       TEMAS
-    ===================================== */
-
     :root {
       color-scheme: dark;
-
-      --bg: #0b1120;
-      --card: #152238;
+      --background: #0b1120;
+      --surface: #152238;
       --border: #2b405a;
-
       --text: #f4f7fb;
       --muted: #aabbd0;
       --accent: #80e0b0;
     }
 
-    :root[data-tema="claro"] {
+    :root[data-theme="light"] {
       color-scheme: light;
-
-      --bg: #f2f6fa;
-      --card: #ffffff;
+      --background: #f2f6fa;
+      --surface: #ffffff;
       --border: #d4e0e8;
-
       --text: #152439;
       --muted: #4c6075;
       --accent: #18754c;
     }
 
-    /* =====================================
-       ESTILOS GERAIS
-    ===================================== */
-
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
-      margin: 0;
+      display: grid;
+      place-items: center;
       min-height: 100vh;
       min-height: 100dvh;
-
-      display: flex;
-      align-items: center;
-      justify-content: center;
-
+      margin: 0;
       padding: 32px 20px;
-
-      background: var(--bg);
+      background: var(--background);
       color: var(--text);
-
-      font-family:
-        system-ui,
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        sans-serif;
-
-      line-height: 1.6;
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
     }
 
-    main {
-      width: 100%;
-      max-width: 500px;
-    }
-
-    /* =====================================
-       IDENTIFICAÇÃO
-    ===================================== */
+    main { width: min(100%, 500px); }
 
     .badge {
       display: inline-flex;
       align-items: center;
       gap: 9px;
-
       padding: 8px 13px;
-
-      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 50px;
-
+      border-radius: 999px;
+      background: var(--surface);
       color: var(--accent);
-
       font-size: 12px;
       font-weight: 700;
       letter-spacing: .05em;
@@ -107,287 +60,103 @@
     .dot {
       width: 8px;
       height: 8px;
-
-      background: var(--accent);
       border-radius: 50%;
+      background: currentColor;
     }
-
-    /* =====================================
-       MENSAGEM PRINCIPAL
-    ===================================== */
 
     h1 {
-      margin: 25px 0 15px;
-
-      font-size: clamp(
-        32px,
-        8vw,
-        43px
-      );
-
+      margin: 24px 0 14px;
+      font-size: clamp(32px, 8vw, 43px);
       line-height: 1.15;
-      letter-spacing: -1.2px;
-      overflow-wrap: anywhere;
+      letter-spacing: -.03em;
     }
 
-    .description {
-      margin: 0;
+    p { margin: 0; color: var(--muted); }
 
-      color: var(--muted);
-      font-size: 16px;
+    [data-field] {
+      overflow-wrap: anywhere;
       white-space: pre-line;
-      overflow-wrap: anywhere;
     }
-
-    /* =====================================
-       CARTÃO DE OBJETIVO
-    ===================================== */
 
     .card {
       margin-top: 30px;
       padding: 24px;
-
-      background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
+      background: var(--surface);
     }
 
     .label {
       margin-bottom: 12px;
-
       color: var(--accent);
-
       font-size: 12px;
       font-weight: 800;
-
       letter-spacing: .09em;
       text-transform: uppercase;
     }
 
     .goal {
-      margin: 0;
-
       color: var(--text);
-
       font-size: 20px;
       font-weight: 700;
       line-height: 1.45;
-      white-space: pre-line;
-      overflow-wrap: anywhere;
     }
 
-    .action {
-      margin-top: 16px;
-
-      color: var(--muted);
-      font-size: 14px;
-      white-space: pre-line;
-      overflow-wrap: anywhere;
-    }
-
-    /* =====================================
-       HORÁRIO
-    ===================================== */
-
-    .schedule {
-      margin-top: 28px;
-    }
-
-    .schedule strong {
-      display: block;
-
-      color: var(--text);
-
-      font-size: 27px;
-      font-weight: 750;
-      line-height: 1.4;
-      white-space: pre-line;
-      overflow-wrap: anywhere;
-    }
-
-    /* =====================================
-       RODAPÉ
-    ===================================== */
-
-    footer {
-      margin-top: 30px;
-
-      color: var(--muted);
-
-      font-size: 13px;
-      text-align: left;
-      white-space: pre-line;
-      overflow-wrap: anywhere;
-    }
+    .action { margin-top: 16px; font-size: 14px; }
+    .schedule { margin-top: 28px; }
+    .unlock { color: var(--text); font-size: 27px; font-weight: 750; }
+    footer { margin-top: 30px; color: var(--muted); font-size: 13px; }
 
     @media (max-width: 400px) {
-      .card {
-        padding: 20px;
-      }
-
-      .goal {
-        font-size: 18px;
-      }
-
-      .schedule strong {
-        font-size: 24px;
-      }
+      .card { padding: 20px; }
+      .goal { font-size: 18px; }
+      .unlock { font-size: 24px; }
     }
   </style>
 </head>
-
 <body>
-
   <main>
-
-    <!-- SITE BLOQUEADO -->
-
     <div class="badge">
-      <span class="dot"></span>
-
-      <span>
-        ACESSO PAUSADO ·
-        <span id="site">Site bloqueado</span>
-      </span>
+      <span class="dot" aria-hidden="true"></span>
+      <span>ACCESS PAUSED · <span data-field="site">Blocked website</span></span>
     </div>
 
-    <!-- MENSAGEM PRINCIPAL -->
+    <h1 data-field="title">You chose to protect your time.</h1>
+    <p data-field="message">Entertainment can wait. Focus on what matters.</p>
 
-    <h1 id="titulo">
-      Você escolheu proteger seu tempo.
-    </h1>
-
-    <p
-      id="mensagem"
-      class="description"
-    >
-      O entretenimento pode esperar.
-      Este é o momento de avançar
-      no que realmente importa.
-    </p>
-
-    <!-- OBJETIVO -->
-
-    <section class="card">
-
-      <div class="label">
-        Seu objetivo
-      </div>
-
-      <p
-        id="objetivo"
-        class="goal"
-      >
-        Construir algo importante para você.
-      </p>
-
-      <p
-        id="acao"
-        class="action"
-      >
-        Comece por uma pequena tarefa.
-      </p>
-
+    <section class="card" aria-labelledby="goal-label">
+      <div class="label" id="goal-label">Your goal</div>
+      <p class="goal" data-field="goal">Build something meaningful to you.</p>
+      <p class="action" data-field="action">Start with one small task.</p>
     </section>
 
-    <!-- PRÓXIMA LIBERAÇÃO -->
-
-    <section class="schedule">
-
-      <div class="label">
-        Próxima liberação
-      </div>
-
-      <strong id="liberacao">
-        Consulte seus horários
-      </strong>
-
+    <section class="schedule" aria-labelledby="unlock-label">
+      <div class="label" id="unlock-label">Next unlock</div>
+      <div class="unlock" data-field="unlock">Check your schedule</div>
     </section>
 
-    <!-- RODAPÉ -->
-
-    <footer id="rodape">
-      Disciplina hoje. Liberdade amanhã.
-    </footer>
-
+    <footer data-field="footer">Discipline today. Freedom tomorrow.</footer>
   </main>
-
-  <!-- =====================================
-       JAVASCRIPT
-  ===================================== -->
 
   <script>
     (() => {
       'use strict';
 
-      // ===================================
-      // LEITURA DOS PARÂMETROS
-      // ===================================
+      // English-only parameters, passed in the URL fragment (#).
+      const params = new URLSearchParams(location.hash.slice(1));
 
-      // Prioridade para #, depois ?.
-      const hash = location.hash.slice(1);
-      const query = location.search.slice(1);
+      document.documentElement.dataset.theme =
+        params.get('theme') === 'light' ? 'light' : 'dark';
 
-      const parametros = new URLSearchParams(
-        hash || query
-      );
-
-      // ===================================
-      // CAMPOS PERSONALIZÁVEIS
-      // ===================================
-
-      const campos = [
-        'site',
-        'titulo',
-        'mensagem',
-        'objetivo',
-        'acao',
-        'liberacao',
-        'rodape'
-      ];
-
-      for (const campo of campos) {
-        const valor = parametros.get(campo);
-
-        if (valor === null) continue;
-
-        const elemento = document.getElementById(
-          campo
-        );
-
-        if (!elemento) continue;
-
-        // Limita tamanho dos parâmetros.
-        const texto = valor.slice(0, 600);
-
-        // textContent impede injeção HTML.
-        elemento.textContent = texto;
+      // Each data-field attribute matches its URL parameter name.
+      for (const element of document.querySelectorAll('[data-field]')) {
+        const value = params.get(element.dataset.field);
+        if (value !== null) element.textContent = value.slice(0, 600);
       }
 
-      // ===================================
-      // TEMA
-      // ===================================
-
-      const tema = parametros.get('tema');
-
-      document.documentElement.dataset.tema =
-        tema === 'claro'
-          ? 'claro'
-          : 'escuro';
-
-      // ===================================
-      // TÍTULO DA ABA
-      // ===================================
-
-      const site = parametros.get('site');
-
-      if (site) {
-        document.title =
-          'Acesso pausado — ' + site.slice(0, 100);
-      }
-
+      const site = params.get('site');
+      if (site) document.title = `Access paused — ${site.slice(0, 100)}`;
     })();
   </script>
-
 </body>
 </html>
