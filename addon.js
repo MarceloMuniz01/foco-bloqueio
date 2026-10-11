@@ -1,9 +1,9 @@
 
 // ==UserScript==
-// @name         Foco - Bloqueador de Sites
+// @name         Foco Bloqueio - Website Blocker
 // @namespace    foco.via
-// @version      2.0.0
-// @description  Bloqueia sites por horario e redireciona para pagina HTTPS personalizavel
+// @version      2.1.0
+// @description  Blocks websites by schedule and redirects to a customizable HTTPS focus page.
 // @match        http://*/*
 // @match        https://*/*
 // @run-at       document-start
@@ -14,199 +14,248 @@
   'use strict';
 
   // =====================================
-  // CONFIGURAÇÕES
+  // CONFIGURATION
   // =====================================
 
   const CONFIG = {
-    // Substitua pela URL do seu GitHub Pages
-    pagina: 'https://YOUR_USER.github.io/foco-bloqueio/',
+    // Replace with your GitHub Pages URL
+    blockPageUrl:
+      'https://YOUR_USER.github.io/foco-bloqueio/',
 
-    almoco: {
-      inicio: '12:00',
-      fim: '13:00'
+    lunch: {
+      start: '12:00',
+      end: '13:00'
     },
 
-    noite: '17:30',
+    eveningUnlock: '17:30',
 
-    // Liberados no almoço e após 17:30
-    sitesAlmoco: [
+    // Allowed during lunch and after 17:30
+    lunchAndEveningSites: [
       '*.youtube.com',
       'youtu.be',
       '*.instagram.com',
       '*.tiktok.com'
     ],
 
-    // Liberados somente após 17:30
-    sitesNoite: [
-      '*anything*',
+    // Allowed only after 17:30
+    eveningOnlySites: [
+      '*anything*'
     ],
 
-    tema: 'escuro', // 'escuro' ou 'claro'
+    theme: 'dark', // 'dark' or 'light'
 
-    textos: {
-      titulo:
-        'Você escolheu proteger seu tempo.',
+    messages: {
+      title:
+        'You chose to protect your time.',
 
-      mensagem:
-        'O entretenimento pode esperar. Volte ao que você quer construir.',
+      description:
+        'Entertainment can wait. Focus on what you want to build.',
 
-      objetivo:
-        'Conquistar um trabalho remoto como programador, recebendo em moeda forte.',
+      goal:
+        'Build a successful career and achieve financial independence.',
 
-      acao:
-        'Abra o notebook e avance uma pequena tarefa do projeto.',
+      action:
+        'Start with one small task and make progress on your goals.',
 
-      rodape:
-        'Disciplina hoje. Liberdade amanhã.'
+      footer:
+        'Discipline today. Freedom tomorrow.'
     }
   };
 
   // =====================================
-  // VERIFICAÇÕES INICIAIS
+  // INITIAL CHECKS
   // =====================================
 
+  // Run only in the top-level window.
   if (window.top !== window.self) return;
 
-  if (CONFIG.pagina.includes('SEU_USUARIO')) {
+  // Make sure the user has configured the URL.
+  if (CONFIG.blockPageUrl.includes('YOUR_USER')) {
     console.warn(
-      '[Foco] Configure a URL da pagina antes de usar.'
+      '[Foco Bloqueio] Please configure your block page URL.'
     );
     return;
   }
 
-  let pagina;
+  let blockPage;
 
   try {
-    pagina = new URL(CONFIG.pagina);
+    blockPage = new URL(CONFIG.blockPageUrl);
 
-    if (pagina.protocol !== 'https:') return;
-  } catch (_) {
+    // Only allow HTTPS redirect destinations.
+    if (blockPage.protocol !== 'https:') {
+      console.warn(
+        '[Foco Bloqueio] The block page must use HTTPS.'
+      );
+      return;
+    }
+  } catch (error) {
+    console.error(
+      '[Foco Bloqueio] Invalid block page URL.',
+      error
+    );
     return;
   }
 
-  // Não bloquear a página motivacional.
-  if (location.origin === pagina.origin) return;
+  // Prevent redirect loops.
+  if (location.origin === blockPage.origin) {
+    return;
+  }
 
-  const host = location.hostname
+  const hostname = location.hostname
     .toLowerCase()
     .replace(/\.$/, '');
 
   // =====================================
-  // WILDCARDS
+  // WILDCARD MATCHING
   // =====================================
 
-  function combina(dominio, mascara) {
-    const p = String(mascara)
+  function matchesPattern(domain, pattern) {
+    const normalizedPattern = String(pattern)
       .trim()
       .toLowerCase();
 
-    if (!p) return false;
+    if (!normalizedPattern) return false;
 
-    // *.youtube.com inclui youtube.com.
+    // *.youtube.com also matches youtube.com
     if (
-      p.startsWith('*.') &&
-      dominio === p.slice(2)
+      normalizedPattern.startsWith('*.') &&
+      domain === normalizedPattern.slice(2)
     ) {
       return true;
     }
 
-    const escape = parte =>
-      parte.replace(
+    // Escape regex special characters.
+    const escapeRegex = part =>
+      part.replace(
         /[.*+?^${}()|[\]\\]/g,
         '\\$&'
       );
 
-    const regex =
+    // Convert * into a regex wildcard.
+    const regexPattern =
       '^' +
-      p.split('*').map(escape).join('.*') +
+      normalizedPattern
+        .split('*')
+        .map(escapeRegex)
+        .join('.*') +
       '$';
 
-    return new RegExp(regex, 'i').test(dominio);
+    return new RegExp(
+      regexPattern,
+      'i'
+    ).test(domain);
   }
 
-  const estaNaLista = lista =>
-    lista.some(p => combina(host, p));
+  function matchesList(list) {
+    return list.some(pattern =>
+      matchesPattern(hostname, pattern)
+    );
+  }
 
-  // Lista mais restritiva tem prioridade.
-  const soNoite = estaNaLista(
-    CONFIG.sitesNoite
+  // The more restrictive list takes priority.
+  const eveningOnly = matchesList(
+    CONFIG.eveningOnlySites
   );
 
-  const almoco = estaNaLista(
-    CONFIG.sitesAlmoco
+  const lunchAndEvening = matchesList(
+    CONFIG.lunchAndEveningSites
   );
 
-  if (!soNoite && !almoco) return;
+  // Website is not in either blocklist.
+  if (!eveningOnly && !lunchAndEvening) {
+    return;
+  }
 
   // =====================================
-  // HORÁRIOS
+  // SCHEDULE CHECK
   // =====================================
 
-  const minutos = horario => {
-    const [h, m] = horario
+  function toMinutes(time) {
+    const [hours, minutes] = time
       .split(':')
       .map(Number);
 
-    return h * 60 + m;
-  };
+    return hours * 60 + minutes;
+  }
 
-  const agora = new Date();
+  const now = new Date();
 
-  const atual =
-    agora.getHours() * 60 +
-    agora.getMinutes();
+  const currentMinutes =
+    now.getHours() * 60 +
+    now.getMinutes();
 
-  const inicioAlmoco = minutos(
-    CONFIG.almoco.inicio
+  const lunchStart = toMinutes(
+    CONFIG.lunch.start
   );
 
-  const fimAlmoco = minutos(
-    CONFIG.almoco.fim
+  const lunchEnd = toMinutes(
+    CONFIG.lunch.end
   );
 
-  const inicioNoite = minutos(
-    CONFIG.noite
+  const eveningStart = toMinutes(
+    CONFIG.eveningUnlock
   );
 
-  // Após 17:30, todos liberados.
-  if (atual >= inicioNoite) return;
+  // All configured websites are allowed
+  // after the evening unlock time.
+  if (currentMinutes >= eveningStart) {
+    return;
+  }
 
-  // Almoço libera somente primeira lista.
+  // Lunch access is only available
+  // to websites in the first blocklist.
   if (
-    !soNoite &&
-    almoco &&
-    atual >= inicioAlmoco &&
-    atual < fimAlmoco
+    !eveningOnly &&
+    lunchAndEvening &&
+    currentMinutes >= lunchStart &&
+    currentMinutes < lunchEnd
   ) {
     return;
   }
 
-  // Calcula a próxima liberação.
-  const horario =
-    !soNoite && atual < inicioAlmoco
-      ? CONFIG.almoco.inicio
-      : CONFIG.noite;
-
   // =====================================
-  // PARÂMETROS DA PÁGINA
+  // NEXT UNLOCK TIME
   // =====================================
 
-  const parametros = new URLSearchParams({
-    site: host,
+  const nextUnlock =
+    !eveningOnly && currentMinutes < lunchStart
+      ? CONFIG.lunch.start
+      : CONFIG.eveningUnlock;
 
-    ...CONFIG.textos,
+  // =====================================
+  // BLOCK PAGE PARAMETERS
+  // =====================================
 
-    liberacao: `Hoje, às ${horario}`,
+  // Keep the original parameter names
+  // for compatibility with index.html.
+  const params = new URLSearchParams({
+    site: hostname,
 
-    tema: CONFIG.tema
+    titulo: CONFIG.messages.title,
+    mensagem: CONFIG.messages.description,
+    objetivo: CONFIG.messages.goal,
+    acao: CONFIG.messages.action,
+    rodape: CONFIG.messages.footer,
+
+    liberacao: `Today at ${nextUnlock}`,
+
+    tema: CONFIG.theme === 'light'
+      ? 'claro'
+      : 'escuro'
   });
 
   // =====================================
-  // REDIRECIONAMENTO HTTPS
+  // HTTPS REDIRECT
   // =====================================
 
-  // Os parâmetros ficam no fragmento #.
-  pagina.hash = parametros.toString();
+  // Store parameters in the URL fragment (#).
+  // Fragments are not sent to the server
+  // as part of the HTTP request.
+  blockPage.hash = params.toString();
 
-  location.replace(pagina.href);
+  // Redirect without preserving the
+  // blocked page in browser history.
+  location.replace(blockPage.href);
+
 })();
